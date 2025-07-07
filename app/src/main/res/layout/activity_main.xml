@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <org.osmdroid.views.MapView
+        android:id="@+id/map"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:layout_editor_absoluteX="16dp"
+        tools:layout_editor_absoluteY="39dp">
+
+    </org.osmdroid.views.MapView>
+
+
+    <ImageButton
+        android:id="@+id/btn_mylocation"
+        android:layout_width="43dp"
+        android:layout_height="45dp"
+        android:background="@android:color/transparent"
+        android:scaleType="fitCenter"
+        android:src="@drawable/icon_mylocation"
+        android:onClick="onShowMyPositionClicked"
+
+        android:layout_marginTop="30dp"
+        android:layout_marginEnd="60dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <Button
+        android:id="@+id/btn_area"
+        android:clickable="false"
+        android:backgroundTint="#8C6D8C"
+        android:textColor="@color/white"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginTop="30dp"
+        android:layout_gravity="center"
+        android:text="AREA"
+        app:layout_constraintEnd_toStartOf="@+id/btn_mylocation"
+        app:layout_constraintStart_toEndOf="@+id/btn_settings" />
+
+
+
+    <ImageButton
+        android:id="@+id/btn_settings"
+        android:layout_width="43dp"
+        android:layout_height="45dp"
+        android:background="@android:color/transparent"
+        android:scaleType="fitCenter"
+        android:src="@drawable/icon_settings"
+        android:onClick="onSettingsClicked"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="30dp"
+        android:layout_marginStart="60dp" />
+
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>
