@@ -6,9 +6,7 @@ import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
-
 import com.osmfogmap.area.Proj4jAreaCalculator;
-
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -19,109 +17,28 @@ import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.Projection;
 import org.osmdroid.views.overlay.Overlay;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-
 import smile.neighbor.KDTree;
 import smile.neighbor.Neighbor;
 
-
 public class FogOverlay extends Overlay {
     private List<GeoPoint> holes = new ArrayList<>();
-    GeometryFactory geometryFactory = new GeometryFactory();
+    private GeometryFactory geometryFactory = new GeometryFactory();
     public Geometry areaGeometry = geometryFactory.createMultiPolygon();
-
     private static final int RADIUS = 400;
-
+    private static OnAreaChangeListener listener;
     private volatile KDTree<GeoPoint> currentKdTree;
-
+    public FogOverlay() {  super(); }
 
     public interface OnAreaChangeListener {
         void onAreaChanged(double newArea);
     }
 
-
-    private static OnAreaChangeListener listener;
-
-
-
-
-
     public static void setOnAreaChangeListener(OnAreaChangeListener listener) {
         FogOverlay.listener = listener;
     }
-
-    private void rebuildKdTree() {
-
-        // A Smile KDTree-je egy double[][] tömböt vár a pontokhoz
-        if (holes.isEmpty())
-        {
-            currentKdTree = null; // Üres fa
-            return;
-        }
-        List<GeoPoint> pointsToBuild = new ArrayList<>(holes);
-
-        double[][] coords = new double[pointsToBuild.size()][2]; // 2 dimenzió (lat, lon)
-        GeoPoint[] data = new GeoPoint[pointsToBuild.size()];
-
-        for (int i = 0; i < pointsToBuild.size(); i++) {
-            GeoPoint point = pointsToBuild.get(i);
-            double[] tomb = new double[]{point.getLatitude(), point.getLongitude()};
-            coords[i] = tomb;
-            data[i] = point;
-        }
-        KDTree<GeoPoint> newKdTree = new KDTree<>(coords, data);
-        currentKdTree = newKdTree; // Atomikus csere
-    }
-
-
-    //Feldolgoz egy bejövő GeoPoint-ot. Ellenőrzi, hogy túl közel van-e már egy létező ponthoz.
-    private boolean processIncomingPoint(GeoPoint incomingPoint)
-    {
-        // Ha még nincs fa, vagy az első pont, add hozzá.
-        if (currentKdTree == null || holes.isEmpty())
-            return true;
-
-        double[] tomb = new double[]{incomingPoint.getLatitude(), incomingPoint.getLongitude()};
-        Neighbor<double[], GeoPoint> nearestResult = currentKdTree.nearest(tomb);
-
-        if (nearestResult != null)
-        {
-            GeoPoint nearestPoint = nearestResult.value();
-            double distance = calculateHaversineDistance(incomingPoint, nearestPoint);
-            if (distance > 250)
-                return true;
-
-        }
-        return false;
-
-
-    }
-
-
-    /**
-     * Haversine képlet a távolság számításához két GPS koordináta között.
-     * Visszaadja a távolságot méterben.
-     */
-    private double calculateHaversineDistance(GeoPoint p1, GeoPoint p2 ) {
-        double lat1 = p1.getLatitude();
-        double lon1 = p1.getLongitude();
-        double lat2 = p2.getLatitude();
-        double lon2 = p2.getLongitude();
-        final int R = 6371000; // Föld sugara méterben
-        double latDistance = Math.toRadians(lat2 - lat1);
-        double lonDistance = Math.toRadians(lon2 - lon1);
-        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
-                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
-                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
-        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return R * c; // Távolság méterben
-    }
-
-
-    public FogOverlay() {  super(); }
 
     public List<GeoPoint> getHoles() {
         return holes;
@@ -142,13 +59,7 @@ public class FogOverlay extends Overlay {
             rebuildKdTree();
             calculateArea();
         }
-
-        //buildUnionPolygon(geoPoint,true);
-
-
     }
-
-
 
     public void loadHoles(List<GeoPoint> points) {
 
@@ -156,10 +67,7 @@ public class FogOverlay extends Overlay {
         simplifyHoles();
         rebuildKdTree();
         calculateArea();
-
-        //buildUnionPolygon(geoPoint, false);
     }
-
 
     public void simplifyHoles()
     {
@@ -179,7 +87,7 @@ public class FogOverlay extends Overlay {
             }
 
             if (isIsolated) {
-                iterator.remove(); // biztonságos eltávolítás
+                iterator.remove();
             }
         }
 
@@ -258,24 +166,6 @@ public class FogOverlay extends Overlay {
         canvas.restoreToCount(saveCount);
     }
 
-    /*
-    private void simplifyPolygon() {
-
-        for (int i = 0; i < hideGeometry.getNumGeometries(); i++) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                Log.d("tag-regi-%2d".formatted(i), String.valueOf(hideGeometry.getGeometryN(i).getCoordinates().length));
-            }
-        }
-
-        hideGeometry = TopologyPreservingSimplifier.simplify(hideGeometry, 0.0001);
-        for (int i = 0; i < hideGeometry.getNumGeometries(); i++) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                Log.d("tag-uj-%2d".formatted(i), String.valueOf(hideGeometry.getGeometryN(i).getCoordinates().length));
-            }
-        }
-    }*/
-
-
     public void calculateArea()
     {
         if(holes.isEmpty())
@@ -307,8 +197,6 @@ public class FogOverlay extends Overlay {
         }
 
     }
-
-
     private Polygon createCirclePolygon(GeoPoint center, double radiusMeters) {
         GeometryFactory factory = new GeometryFactory();
         int numPoints = 16;
@@ -323,7 +211,22 @@ public class FogOverlay extends Overlay {
         LinearRing ring = factory.createLinearRing(coords);
         return factory.createPolygon(ring);
     }
+    /*
+    private void simplifyPolygon() {
 
+        for (int i = 0; i < hideGeometry.getNumGeometries(); i++) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                Log.d("tag-regi-%2d".formatted(i), String.valueOf(hideGeometry.getGeometryN(i).getCoordinates().length));
+            }
+        }
+
+        hideGeometry = TopologyPreservingSimplifier.simplify(hideGeometry, 0.0001);
+        for (int i = 0; i < hideGeometry.getNumGeometries(); i++) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                Log.d("tag-uj-%2d".formatted(i), String.valueOf(hideGeometry.getGeometryN(i).getCoordinates().length));
+            }
+        }
+    }*/
 
     /*public void deleteSmallIslands() {
         List<Polygon> keptPolygons = new ArrayList<>();
@@ -356,15 +259,8 @@ public class FogOverlay extends Overlay {
         return area;
     }
 
-    /**
-     * Kiszámít egy célpontot adott távolságra és irányra egy indulóponttól.
-     *
-     * @param start          Kiinduló GeoPoint
-     * @param distanceMeters Távolság méterben
-     * @param bearingDegrees Irány fokban (0° = észak, 90° = kelet)
-     * @return Új GeoPoint
-     */
-    public static GeoPoint destinationPoint(GeoPoint start, double distanceMeters, double bearingDegrees) {
+    //Kiszámít egy célpontot adott távolságra és irányra egy indulóponttól.
+    public GeoPoint destinationPoint(GeoPoint start, double distanceMeters, double bearingDegrees) {
         double R = 6371000; // földsugár méterben
         double bearingRad = Math.toRadians(bearingDegrees);
 
@@ -379,7 +275,68 @@ public class FogOverlay extends Overlay {
 
         return new GeoPoint(Math.toDegrees(lat2), Math.toDegrees(lon2));
     }
+
+    private void rebuildKdTree() {
+
+        // A Smile KDTree-je egy double[][] tömböt vár a pontokhoz
+        if (holes.isEmpty())
+        {
+            currentKdTree = null; // Üres fa
+            return;
+        }
+        List<GeoPoint> pointsToBuild = new ArrayList<>(holes);
+
+        double[][] coords = new double[pointsToBuild.size()][2]; // 2 dimenzió (lat, lon)
+        GeoPoint[] data = new GeoPoint[pointsToBuild.size()];
+
+        for (int i = 0; i < pointsToBuild.size(); i++) {
+            GeoPoint point = pointsToBuild.get(i);
+            double[] tomb = new double[]{point.getLatitude(), point.getLongitude()};
+            coords[i] = tomb;
+            data[i] = point;
+        }
+        KDTree<GeoPoint> newKdTree = new KDTree<>(coords, data);
+        currentKdTree = newKdTree; // Atomikus csere
+    }
+
+
+    //Feldolgoz egy bejövő GeoPoint-ot. Ellenőrzi, hogy túl közel van-e már egy létező ponthoz.
+    private boolean processIncomingPoint(GeoPoint incomingPoint)
+    {
+        // Ha még nincs fa, vagy az első pont, add hozzá.
+        if (currentKdTree == null || holes.isEmpty())
+            return true;
+
+        double[] tomb = new double[]{incomingPoint.getLatitude(), incomingPoint.getLongitude()};
+        Neighbor<double[], GeoPoint> nearestResult = currentKdTree.nearest(tomb);
+
+        if (nearestResult != null)
+        {
+            GeoPoint nearestPoint = nearestResult.value();
+            double distance = calculateHaversineDistance(incomingPoint, nearestPoint);
+            if (distance > 250)
+                return true;
+
+        }
+        return false;
+    }
+
+    /**
+     * Haversine képlet a távolság számításához két GPS koordináta között.
+     * Visszaadja a távolságot méterben.
+     */
+    private double calculateHaversineDistance(GeoPoint p1, GeoPoint p2 ) {
+        double lat1 = p1.getLatitude();
+        double lon1 = p1.getLongitude();
+        double lat2 = p2.getLatitude();
+        double lon2 = p2.getLongitude();
+        final int R = 6371000; // Föld sugara méterben
+        double latDistance = Math.toRadians(lat2 - lat1);
+        double lonDistance = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c; // Távolság méterben
+    }
 }
-
-
-

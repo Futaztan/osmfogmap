@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/dialog_layout"
-    android:layout_width="match_parent"
+    android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:padding="24dp"
+
     android:orientation="vertical"
+    android:backgroundTint="@color/white"
     android:background="@drawable/dialog_rounded_bg">
 
     <TextView
@@ -14,7 +15,7 @@
         android:layout_gravity="center_horizontal"
         android:textSize="50sp"
         android:textStyle="bold"
-        android:layout_marginBottom="30dp"
+        android:layout_marginBottom="10dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
 
@@ -23,19 +24,16 @@
         android:id="@+id/switch_cameraFollowing"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Camera following"
+        android:text="Follow my location"
         android:layout_gravity="center_horizontal"
         android:textColor="@color/black"
         android:textSize="10pt"
         android:textStyle="bold"
-        android:layout_marginBottom="20dp"
+        android:layout_marginLeft="40dp"
+        android:layout_marginRight="40dp"
+        android:layout_marginBottom="10dp"
         />
-    <Button
-        android:id="@+id/btn_marker"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="MARKEREK"
-        android:layout_gravity="center_horizontal"/>
+
 
 
   <!--  <Button
@@ -54,4 +52,10 @@
         android:layout_gravity="center_horizontal"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
+    <Button
+        android:id="@+id/btn_marker"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="MARKEREK"
+        android:layout_gravity="center_horizontal"/>
 </LinearLayout>

@@ -25,6 +25,7 @@ import com.osmfogmap.settings.SettingsManager;
 
 import org.osmdroid.config.Configuration;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
+import org.osmdroid.tileprovider.tilesource.XYTileSource;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapController;
 import org.osmdroid.views.MapView;
@@ -73,6 +74,7 @@ public class MainActivity extends AppCompatActivity implements LocationUpdateCal
         mapView.setLayerType(View.LAYER_TYPE_HARDWARE,null);
         mapView.setVerticalMapRepetitionEnabled(false);
         mapView.setHorizontalMapRepetitionEnabled(false);
+
         mapView.setTileSource(TileSourceFactory.MAPNIK);
         mapView.setMultiTouchControls(true);
         mapView.setBuiltInZoomControls(false);
