@@ -42,12 +42,12 @@ public class SettingsDialogFragment extends DialogFragment {
 
        // Button btn_color = view.findViewById(R.id.btn_color);
 
-        switch_CameraFollowing.setChecked(settingsManager.CAMERA_FOLLOWING);
+        switch_CameraFollowing.setChecked(settingsManager.LOCATION_FOLLOW);
 
         switch_CameraFollowing.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                settingsManager.CAMERA_FOLLOWING = isChecked;
+                settingsManager.LOCATION_FOLLOW = isChecked;
             }
         });
 //        btn_color.setOnClickListener(v -> {

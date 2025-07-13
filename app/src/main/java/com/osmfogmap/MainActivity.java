@@ -15,25 +15,31 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 
+import com.osmfogmap.area.AreaManager;
 import com.osmfogmap.locationtrack.BackgroundService;
 import com.osmfogmap.locationtrack.LocationUpdateCallback;
-import com.osmfogmap.overlays.FogOverlay;
+import com.osmfogmap.overlays.FogOverlayPolygon;
 import com.osmfogmap.overlays.MyPositionOverlay;
 import com.osmfogmap.save_load.SaveLoadManager;
 import com.osmfogmap.settings.SettingsDialogFragment;
 import com.osmfogmap.settings.SettingsManager;
 
+import org.locationtech.jts.geom.Geometry;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
-import org.osmdroid.tileprovider.tilesource.XYTileSource;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapController;
 import org.osmdroid.views.MapView;
+import org.osmdroid.views.overlay.Marker;
+import org.osmdroid.views.overlay.Overlay;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements LocationUpdateCallback {
     private MapView mapView;
     private MapController mapController;
-    private FogOverlay fogOverlay;
+    private FogOverlayPolygon fogOverlay;
     private SaveLoadManager saveLoadManager;
     private SettingsManager settingsManager;
     private int tick = 0;
@@ -53,48 +59,36 @@ public class MainActivity extends AppCompatActivity implements LocationUpdateCal
         Configuration.getInstance().setUserAgentValue("fogmap/1.0");
         setContentView(R.layout.activity_main);
 
-
         mapView =  findViewById(R.id.map);
-
         myPositionOverlay = new MyPositionOverlay(this);
-        fogOverlay = new FogOverlay();
+        fogOverlay = new FogOverlayPolygon();
         settingsManager = new SettingsManager(fogOverlay,mapView);
         saveLoadManager = new SaveLoadManager(this,fogOverlay,settingsManager);
+        Button btn_area = findViewById(R.id.btn_area);
+        AreaManager areaManager = new AreaManager(btn_area);
+
         if(LOADING_ENABLED)
             saveLoadManager.loadEverything();
-
-
-
-        Button btn_area = findViewById(R.id.btn_area);
-        btn_area.setText("0 km²");
-
-        FogOverlay.setOnAreaChangeListener(newArea -> btn_area.setText(newArea + " km²"));
 
         // mapView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
         mapView.setLayerType(View.LAYER_TYPE_HARDWARE,null);
         mapView.setVerticalMapRepetitionEnabled(false);
         mapView.setHorizontalMapRepetitionEnabled(false);
-
         mapView.setTileSource(TileSourceFactory.MAPNIK);
         mapView.setMultiTouchControls(true);
         mapView.setBuiltInZoomControls(false);
         mapView.setMaxZoomLevel(16.6);
 
-
-
         mapController = (MapController) mapView.getController();
         mapController.setZoom(15);
-
         mapController.animateTo(settingsManager.lastloc,mapView.getZoomLevelDouble(), 1100L);
-       // mapController.setCenter(settingsManager.lastloc);
 
         serviceIntent = new Intent(this, BackgroundService.class);
         BackgroundService.registerCallback(this);
 
-
         mapView.getOverlays().add(fogOverlay);
         mapView.getOverlays().add(myPositionOverlay);
-        fogOverlay.calculateArea();
+
         mapView.invalidate();
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)
@@ -116,14 +110,11 @@ public class MainActivity extends AppCompatActivity implements LocationUpdateCal
             mapView.invalidate();
         });
 
-        if(settingsManager.CAMERA_FOLLOWING)
+        if(settingsManager.LOCATION_FOLLOW)
         {
             MapController mapController = (MapController) mapView.getController();
-            //mapController.setCenter(location);
             mapController.animateTo(location,mapView.getZoomLevelDouble(), 1100L);
-
         }
-
 
         fogOverlay.addHole(location);
       /*  List<Overlay> toRemove = new ArrayList<>();
@@ -145,10 +136,9 @@ public class MainActivity extends AppCompatActivity implements LocationUpdateCal
             marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
             mapView.getOverlays().add(marker);
 
-        }
-*/
-        mapView.invalidate();
+        }*/
 
+        mapView.invalidate();
 
         tick++;
         if(tick==10)
@@ -159,7 +149,7 @@ public class MainActivity extends AppCompatActivity implements LocationUpdateCal
         }
     }
 
-    public void requestLocationPermission() {
+    private void requestLocationPermission() {
         ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
     }
 
@@ -192,14 +182,56 @@ public class MainActivity extends AppCompatActivity implements LocationUpdateCal
     {
         SettingsDialogFragment dialog = new SettingsDialogFragment(settingsManager,this);
         dialog.show(getSupportFragmentManager(), "SettingsDialog");
-    }
+}
 
     public void onShowMyPositionClicked(View view) {
         if(lastloc==null)
-        {
-           // mapController.setCenter(settingsManager.lastloc);
             mapController.animateTo(settingsManager.lastloc,mapView.getZoomLevelDouble(), 1100L);
-        }
         else  mapController.animateTo(lastloc,mapView.getZoomLevelDouble(), 1100L);
+    }
+
+    public void onTestClicked(View view) {
+       List<Overlay> toRemove = new ArrayList<>();
+        for (Overlay overlay : mapView.getOverlays()) {
+            if (overlay instanceof Marker) {
+                toRemove.add(overlay);
+            }
+        }
+        mapView.getOverlays().removeAll(toRemove);
+        mapView.invalidate();
+
+
+
+        for(int i = 0; i<fogOverlay.revealedGeometry.getNumGeometries(); i++)
+        {
+
+            Geometry g = fogOverlay.revealedGeometry.getGeometryN(i);
+            for(int j=0; j<g.getCoordinates().length;j++)
+            {
+                Marker marker = new Marker(mapView);
+                GeoPoint p = new GeoPoint(g.getCoordinates()[j].y,g.getCoordinates()[j].x);
+                marker.setPosition(p);
+                marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+                mapView.getOverlays().add(marker);
+            }
+        }
+
+        for(int i =0; i< fogOverlay.getHoles().size();i++)
+        {
+            Marker marker = new Marker(mapView);
+            GeoPoint p = new GeoPoint(fogOverlay.getHoles().get(i));
+            marker.setPosition(p);
+            marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+            mapView.getOverlays().add(marker);
+        }
+        //fogOverlay.simplifyHoles();
+
+        mapView.invalidate();
+
+    }
+
+    public void onTest2Clicked(View view)
+    {
+        fogOverlay.simplifytest();
     }
 }

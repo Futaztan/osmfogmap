@@ -6,21 +6,27 @@ import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
+
 import com.osmfogmap.area.Proj4jAreaCalculator;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LinearRing;
 import org.locationtech.jts.geom.Polygon;
+
 import org.locationtech.jts.operation.union.UnaryUnionOp;
+import org.locationtech.jts.simplify.TopologyPreservingSimplifier;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.Projection;
 import org.osmdroid.views.overlay.Overlay;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import smile.neighbor.KDTree;
+import java.util.Set;
+import com.osmfogmap.MyKDtree;
+
 import smile.neighbor.Neighbor;
 
 public class FogOverlay extends Overlay {
@@ -28,9 +34,32 @@ public class FogOverlay extends Overlay {
     private GeometryFactory geometryFactory = new GeometryFactory();
     public Geometry areaGeometry = geometryFactory.createMultiPolygon();
     private static final int RADIUS = 400;
+
     private static OnAreaChangeListener listener;
-    private volatile KDTree<GeoPoint> currentKdTree;
-    public FogOverlay() {  super(); }
+
+    public volatile MyKDtree<GeoPoint> currentKdTree;
+    public FogOverlay() {  super();
+
+//        double a = 20;
+//        for(int i = 0; i<10000; i++)
+//        {
+//            GeoPoint x = new GeoPoint(20.0,a);
+//            GeoPoint y = new GeoPoint(30.0,a);
+//            GeoPoint z = new GeoPoint(40.0,a);
+//            GeoPoint w = new GeoPoint(50.0,a);
+//            a+=0.001;
+//            holes.add(x);
+//            holes.add(y);
+//            holes.add(z);
+//            holes.add(w);
+//            //Log.d("log-i",String.valueOf(i));
+//        }
+//
+//        rebuildKdTree();
+//        calculateArea();
+        //TODO: terulet szamitas negyzetekre és egyszerusites
+
+    }
 
     public interface OnAreaChangeListener {
         void onAreaChanged(double newArea);
@@ -47,12 +76,14 @@ public class FogOverlay extends Overlay {
     public void deleteHoles() {
         GeoPoint lastloc = holes.get(holes.size()-1);
         holes.clear();
+        areaGeometry = geometryFactory.createMultiPolygon();
         addHole(lastloc);
-        //areaGeometry = geometryFactory.createMultiPolygon();
+
     }
 
     public void addHole(GeoPoint geoPoint) {
         //holes.add(geoPoint);
+
         if(processIncomingPoint(geoPoint))
         {
             holes.add(geoPoint);
@@ -64,14 +95,63 @@ public class FogOverlay extends Overlay {
     public void loadHoles(List<GeoPoint> points) {
 
         holes.addAll(points);
-        simplifyHoles();
         rebuildKdTree();
+        //simplifyHoles();
+        joKDtreeSimpilfy();
         calculateArea();
     }
 
+
+    public void joKDtreeSimpilfy()
+
+
+
+    {
+        // 3. Közeli pontok ritkítása (230m-en belül)
+//        Set<GeoPoint> toRemove = new HashSet<>();
+//        for (GeoPoint point : holes) {
+//            if (toRemove.contains(point)) continue;
+//
+//            double[] coords = new double[]{point.getLatitude(), point.getLongitude()};
+//            List<Neighbor<double[], GeoPoint>> neighbors = currentKdTree.search(coords,230);
+//
+//            for (Neighbor<double[], GeoPoint> neighbor : neighbors) {
+//                GeoPoint other = neighbor.value();
+//                if (other != point) {
+//                    toRemove.add(other);
+//                    currentKdTree.remove(new double[]{other.getLatitude(), other.getLongitude()});
+//                }
+//            }
+//        }
+        Set<GeoPoint> pointsToRemove = new HashSet<>();
+
+        for (GeoPoint point : holes)
+        {
+            if (!pointsToRemove.contains(point))
+            {
+                double[] coords = new double[]{point.getLatitude(), point.getLongitude()};
+                List<Neighbor<double[], GeoPoint>> neighborList = new ArrayList<>();
+                currentKdTree.search(coords, 230, neighborList);
+
+
+                for (int i = 1; i < neighborList.size(); i++)
+                {
+                    GeoPoint neighbor = neighborList.get(i).value();
+                    pointsToRemove.add(neighbor);
+                }
+            }
+        }
+        holes.removeAll(pointsToRemove);
+        rebuildKdTree();
+        calculateArea();
+        //TODO MUKODIK GECI
+
+    }
     public void simplifyHoles()
     {
 
+
+        if(holes.isEmpty()) return;
         Iterator<GeoPoint> iterator = holes.iterator();
         while (iterator.hasNext()) {
             GeoPoint point = iterator.next();
@@ -90,6 +170,9 @@ public class FogOverlay extends Overlay {
                 iterator.remove();
             }
         }
+
+
+
 
         for(int i = 0; i < holes.size();i++)
         {
@@ -113,6 +196,7 @@ public class FogOverlay extends Overlay {
 
     @Override
     public void draw(Canvas canvas, MapView mapView, boolean shadow) {
+
         if (shadow) return;
 
         Projection projection = mapView.getProjection();
@@ -125,6 +209,8 @@ public class FogOverlay extends Overlay {
         Paint holePaint = new Paint();
         holePaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
         holePaint.setAntiAlias(false);
+
+
 
 
 //        if (hideGeometry != null && !hideGeometry.isEmpty()) {
@@ -163,6 +249,7 @@ public class FogOverlay extends Overlay {
             float radius = (float) Math.hypot(edge.x - center.x, edge.y - center.y);
             canvas.drawCircle(center.x, center.y, radius, holePaint);
         }
+
         canvas.restoreToCount(saveCount);
     }
 
@@ -173,60 +260,56 @@ public class FogOverlay extends Overlay {
         areaGeometry = buildUnionPolygon();
 
         double area = UTMarea(areaGeometry);
+
+
+
         if(listener!=null)
             listener.onAreaChanged(area);
 
     }
+
+
     private Geometry buildUnionPolygon() {
+        Geometry unionResult;
 
 
-        if(areaGeometry.isEmpty())
+       if(areaGeometry.isEmpty())
         {
             List<Polygon> circlePolygons = new ArrayList<>();
 
             for (GeoPoint geoPoint : holes) {
-                circlePolygons.add(createCirclePolygon(geoPoint, RADIUS));
+                circlePolygons.add(createRectanglePolygon(geoPoint));
             }
-            return UnaryUnionOp.union(circlePolygons);
+            unionResult= UnaryUnionOp.union(circlePolygons);
         }
         else
         {
             GeoPoint last = holes.get(holes.size()-1);
-            Geometry circle = createCirclePolygon(last,RADIUS);
-            return circle.union(areaGeometry);
+            Geometry circle = createRectanglePolygon(last);
+            unionResult= circle.union(areaGeometry);
         }
+        return TopologyPreservingSimplifier.simplify(unionResult,0.008);
+
+
 
     }
-    private Polygon createCirclePolygon(GeoPoint center, double radiusMeters) {
-        GeometryFactory factory = new GeometryFactory();
-        int numPoints = 16;
-        Coordinate[] coords = new Coordinate[numPoints + 1];
 
-        for (int i = 0; i <= numPoints; i++) {
-            double angle = 2 * Math.PI * i / numPoints;
-            GeoPoint p = destinationPoint(center, radiusMeters, Math.toDegrees(angle));
-            coords[i] = new Coordinate(p.getLongitude(), p.getLatitude());
+    private Polygon createRectanglePolygon(GeoPoint center)
+    {
+        Coordinate[] coords = new Coordinate[4+1];
+        double[] angles = {45,135,225,315};
+        int atloDistance = 565;
+        for(int i=0; i<4; i++)
+        {
+            GeoPoint p = destinationPoint(center,atloDistance,angles[i]);
+            coords[i] = new Coordinate(p.getLongitude(),p.getLatitude());
         }
-
-        LinearRing ring = factory.createLinearRing(coords);
-        return factory.createPolygon(ring);
+        coords[4] = new Coordinate(coords[0].x, coords[0].y);
+        LinearRing ring = geometryFactory.createLinearRing(coords);
+        return  geometryFactory.createPolygon(coords);
+        //return geometryFactory.createPolygon(ring);
     }
-    /*
-    private void simplifyPolygon() {
 
-        for (int i = 0; i < hideGeometry.getNumGeometries(); i++) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                Log.d("tag-regi-%2d".formatted(i), String.valueOf(hideGeometry.getGeometryN(i).getCoordinates().length));
-            }
-        }
-
-        hideGeometry = TopologyPreservingSimplifier.simplify(hideGeometry, 0.0001);
-        for (int i = 0; i < hideGeometry.getNumGeometries(); i++) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                Log.d("tag-uj-%2d".formatted(i), String.valueOf(hideGeometry.getGeometryN(i).getCoordinates().length));
-            }
-        }
-    }*/
 
     /*public void deleteSmallIslands() {
         List<Polygon> keptPolygons = new ArrayList<>();
@@ -295,7 +378,7 @@ public class FogOverlay extends Overlay {
             coords[i] = tomb;
             data[i] = point;
         }
-        KDTree<GeoPoint> newKdTree = new KDTree<>(coords, data);
+        MyKDtree<GeoPoint> newKdTree = new MyKDtree<>(coords, data);
         currentKdTree = newKdTree; // Atomikus csere
     }
 

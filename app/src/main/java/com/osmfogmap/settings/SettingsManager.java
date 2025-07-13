@@ -1,6 +1,7 @@
 package com.osmfogmap.settings;
 
 import com.osmfogmap.overlays.FogOverlay;
+import com.osmfogmap.overlays.FogOverlayPolygon;
 
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
@@ -11,13 +12,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SettingsManager {
-    private FogOverlay fogOverlay;
+    private FogOverlayPolygon fogOverlay;
     MapView mapView;
     private boolean enabledMarker = false;
-    public boolean CAMERA_FOLLOWING = false;
+    public boolean LOCATION_FOLLOW = false;
     public GeoPoint lastloc = new GeoPoint(0.0,0.0);
 
-    public SettingsManager(FogOverlay foverlay, MapView map)
+    public SettingsManager(FogOverlayPolygon foverlay, MapView map)
     {
         fogOverlay=foverlay;
         mapView=map;
