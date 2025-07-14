@@ -24,6 +24,8 @@ import android.graphics.Path;
 import android.os.Looper;
 import android.util.Log;
 
+import com.osmfogmap.MainActivity;
+import com.osmfogmap.area.AreaManager;
 import com.osmfogmap.area.Proj4jAreaCalculator;
 import com.osmfogmap.overlays.temp.KDtreeManager;
 
@@ -38,17 +40,21 @@ public class FogOverlayPolygon extends Overlay {
     private final List<GeoPoint> holes = new ArrayList<>();
     private final GeometryFactory geometryFactory = new GeometryFactory();
     public volatile Geometry revealedGeometry = geometryFactory.createMultiPolygon();
+    //private Geometry areaGeometry = geometryFactory.createMultiPolygon();
     private static final int RADIUS = 400;
-    private static FogOverlayPolygon.OnAreaChangeListener listener;
+    private static AreaManager.OnAreaChangeListener listener;
     private final KDtreeManager kdTreeManager = new KDtreeManager();
 
     private final ExecutorService executor = Executors.newSingleThreadExecutor(); // Single background thread for sequential tasks
     private final Handler mainHandler = new Handler(Looper.getMainLooper());     // Handler for UI thread updates
+    MainActivity mainActivity;
 
-    public FogOverlayPolygon()
+    public FogOverlayPolygon(MainActivity main)
     {
+
         //TODO: kdtree egyszerusites utan szar mert messze lesznek a pontok amikbol felepiti a polygont és szogletes lesz
         super();
+        mainActivity = main;
 
 //        double a = 20;
 //        for(int i = 0; i<10000; i++)
@@ -71,12 +77,12 @@ public class FogOverlayPolygon extends Overlay {
     }
 
 
-    public interface OnAreaChangeListener {
-        void onAreaChanged(double newArea);
-    }
+//    public interface OnAreaChangeListener {
+//        void onAreaChanged(double newArea);
+//    }
 
-    public static void setOnAreaChangeListener(FogOverlayPolygon.OnAreaChangeListener listener) {
-        FogOverlayPolygon.listener = listener;
+    public static void setOnAreaChangeListener(AreaManager.OnAreaChangeListener _listener) {
+        listener = _listener;
     }
 
     public List<GeoPoint> getHoles() {
@@ -87,35 +93,30 @@ public class FogOverlayPolygon extends Overlay {
         if (kdTreeManager.processIncomingPoint(geoPoint,holes)) {
             holes.add(geoPoint);
             kdTreeManager.rebuildKdTree(holes);
-
-
             updateRevealedGeometry_andArea(false);
-            calculateArea();
         }
-
     }
-
     public void deleteHoles() {
         GeoPoint lastloc = holes.get(holes.size() - 1);
         holes.clear();
         kdTreeManager.rebuildKdTree(holes);
+        listener.onAreaChanged(-1);
         revealedGeometry = geometryFactory.createMultiPolygon();
         addHole(lastloc);
     }
-
     public void loadHoles(List<GeoPoint> points) {
 
         holes.addAll(points);
         kdTreeManager.rebuildKdTree(holes);
         kdTreeManager.simplifyKDtree(holes);
-        updateRevealedGeometry_andArea(true);
-        calculateArea();
+        //updateRevealedGeometry_andArea(true);
+        //calculateArea();
 
     }
     public void loadPolygon(Geometry p)
     {
         revealedGeometry = p;
-        deleteSmallIslands();
+        //deleteSmallIslands();
         calculateArea();
     }
 
@@ -126,6 +127,7 @@ public class FogOverlayPolygon extends Overlay {
 
         executor.execute(()->
         {
+            long startTime = System.nanoTime(); // Record the start time
             Geometry unionResult;
 
 
@@ -152,6 +154,11 @@ public class FogOverlayPolygon extends Overlay {
             //AREA CALCULATING
             //double area = UTMarea(finalUnionResult);
 
+            long endTime = System.nanoTime(); // Record the end time
+            long durationNano = endTime - startTime;
+            double durationMillis = (double) durationNano / 1_000_000.0; // Convert nanoseconds to milliseconds
+            Log.d("fv-updateandreveal",String.valueOf(durationMillis));
+
             mainHandler.post(()->
             {
                 revealedGeometry = finalUnionResult;
@@ -176,13 +183,9 @@ public class FogOverlayPolygon extends Overlay {
                 keptPolygons.add((Polygon) geom);
             }
         }
-
-        if (keptPolygons.isEmpty()) {
-            revealedGeometry = geometryFactory.createMultiPolygon();
-        } else {
-            revealedGeometry = geometryFactory.createMultiPolygon(
-                    keptPolygons.toArray(new Polygon[0]));
-        }
+        //TODO
+        if (keptPolygons.isEmpty())  revealedGeometry = geometryFactory.createMultiPolygon();
+        else revealedGeometry = geometryFactory.createMultiPolygon(keptPolygons.toArray(new Polygon[0]));
     }
 
     private void calculateArea()
@@ -197,10 +200,18 @@ public class FogOverlayPolygon extends Overlay {
             return;
         }
         executor.execute(()->{
+
+            long startTime = System.nanoTime(); // Record the end time
+            //Geometry g = DouglasPeuckerSimplifier.simplify(revealedGeometry,0.0025);
+            //mainActivity.geometrymarker(g);
             double area = UTMarea(revealedGeometry);
             mainHandler.post(()-> {
                 if(listener!=null)
                     listener.onAreaChanged(area);
+                long endTime = System.nanoTime(); // Record the end time
+                long durationNano = endTime - startTime;
+                double durationMillis = (double) durationNano / 1_000_000.0; // Convert nanoseconds to milliseconds
+                Log.d("fv-calculatearea",String.valueOf(durationMillis));
             });
         });
 
@@ -209,7 +220,7 @@ public class FogOverlayPolygon extends Overlay {
 
 
     private double UTMarea(Geometry geometry) {
-
+        long startTime = System.nanoTime(); // Record the end time
         double area = 0;
         for (int i = 0; i < geometry.getNumGeometries(); i++) {
             double a = Proj4jAreaCalculator.getAreaInSquareMeters(geometry.getGeometryN(i));
@@ -219,11 +230,16 @@ public class FogOverlayPolygon extends Overlay {
 
         area = area / 1000000;
         area = Math.floor(area * 100) / 100;
+        long endTime = System.nanoTime(); // Record the end time
+        long durationNano = endTime - startTime;
+        double durationMillis = (double) durationNano / 1_000_000.0; // Convert nanoseconds to milliseconds
+        Log.d("fv-utmarea",String.valueOf(durationMillis));
         return area;
     }
 
     private Polygon createCirclePolygon(GeoPoint center) {
-        GeometryFactory factory = new GeometryFactory();
+        long startTime = System.nanoTime();
+
         int numPoints = 16;
         Coordinate[] coords = new Coordinate[numPoints + 1];
 
@@ -233,8 +249,12 @@ public class FogOverlayPolygon extends Overlay {
             coords[i] = new Coordinate(p.getLongitude(), p.getLatitude());
         }
 
-        LinearRing ring = factory.createLinearRing(coords);
-        return factory.createPolygon(ring);
+        LinearRing ring = geometryFactory.createLinearRing(coords);
+        long endTime = System.nanoTime();
+        long durationNano = endTime - startTime;
+        double durationMillis = (double) durationNano / 1_000_000.0; // Convert nanoseconds to milliseconds
+        Log.d("fv-createcircle",String.valueOf(durationMillis));
+        return geometryFactory.createPolygon(ring);
     }
 
     private GeoPoint destinationPoint(GeoPoint start, double distanceMeters, double bearingDegrees) {

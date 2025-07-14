@@ -61,7 +61,7 @@ public class MainActivity extends AppCompatActivity implements LocationUpdateCal
 
         mapView =  findViewById(R.id.map);
         myPositionOverlay = new MyPositionOverlay(this);
-        fogOverlay = new FogOverlayPolygon();
+        fogOverlay = new FogOverlayPolygon(this);
         settingsManager = new SettingsManager(fogOverlay,mapView);
         saveLoadManager = new SaveLoadManager(this,fogOverlay,settingsManager);
         Button btn_area = findViewById(R.id.btn_area);
@@ -100,6 +100,36 @@ public class MainActivity extends AppCompatActivity implements LocationUpdateCal
     }
 
 
+    public void geometrymarker(Geometry g)
+    {
+        List<Overlay> toRemove = new ArrayList<>();
+        for (Overlay overlay : mapView.getOverlays()) {
+            if (overlay instanceof Marker) {
+                toRemove.add(overlay);
+            }
+        }
+        mapView.getOverlays().removeAll(toRemove);
+        mapView.invalidate();
+
+
+
+        for(int i = 0; i<g.getNumGeometries(); i++)
+        {
+
+            Geometry ge = g.getGeometryN(i);
+            for(int j=0; j<ge.getCoordinates().length;j++)
+            {
+                Marker marker = new Marker(mapView);
+                GeoPoint p = new GeoPoint(ge.getCoordinates()[j].y,ge.getCoordinates()[j].x);
+                marker.setPosition(p);
+                marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+                mapView.getOverlays().add(marker);
+            }
+        }
+
+        mapView.invalidate();
+
+    }
 
     @Override
     public void onLocationUpdated(GeoPoint location) {

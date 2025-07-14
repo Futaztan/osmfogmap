@@ -1,5 +1,7 @@
 package com.osmfogmap.overlays.temp;
 
+import android.util.Log;
+
 import com.osmfogmap.MyKDtree;
 import org.osmdroid.util.GeoPoint;
 import java.util.ArrayList;
@@ -10,6 +12,7 @@ import smile.neighbor.Neighbor;
 public class KDtreeManager {
     private MyKDtree<GeoPoint> kdTree;
     public void rebuildKdTree(List<GeoPoint> holes) {
+        long startTime = System.nanoTime(); // Record the end time
 
         if (holes.isEmpty()) {
             kdTree = null;
@@ -27,10 +30,15 @@ public class KDtreeManager {
             data[i] = point;
         }
         kdTree = new MyKDtree<>(coords, data);
+        long endTime = System.nanoTime(); // Record the end time
+        long durationNano = endTime - startTime;
+        double durationMillis = (double) durationNano / 1_000_000.0; // Convert nanoseconds to milliseconds
+        Log.d("fv-rebuildkdtree",String.valueOf(durationMillis));
     }
 
     public boolean processIncomingPoint(GeoPoint incomingPoint, List<GeoPoint> holes) {
         // Ha még nincs fa, vagy az első pont, add hozzá.
+        long startTime = System.nanoTime(); // Record the end time
         if (kdTree == null || holes.isEmpty())
             return true;
 
@@ -40,6 +48,10 @@ public class KDtreeManager {
         if (nearestResult != null) {
             GeoPoint nearestPoint = nearestResult.value();
             double distance = calculateHaversineDistance(incomingPoint, nearestPoint);
+            long endTime = System.nanoTime(); // Record the end time
+            long durationNano = endTime - startTime;
+            double durationMillis = (double) durationNano / 1_000_000.0; // Convert nanoseconds to milliseconds
+            Log.d("fv-processincoming",String.valueOf(durationMillis));
             if (distance > 100)
                 return true;
 

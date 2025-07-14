@@ -31,14 +31,16 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 
-    <Button
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_area"
+
+        android:fontFamily="@font/clash"
         android:clickable="false"
         android:textSize="18sp"
         android:textStyle="normal"
-        android:backgroundTint="#404659"
-
-        android:textColor="@color/white"
+        android:backgroundTint="#524153"
+        app:cornerRadius="11dp"
+        android:textColor="#FFFFFF"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:layout_constraintTop_toTopOf="parent"
@@ -47,9 +49,7 @@
         android:text="AREA"
         app:layout_constraintEnd_toStartOf="@+id/btn_mylocation"
         app:layout_constraintStart_toEndOf="@+id/btn_settings"/>
-      <!--   android:backgroundTint="@color/material_dynamic_secondary30" -->
-    <!--  android:backgroundTint="#404659" -->
-    <!-- TODO -->
+
 
 
 

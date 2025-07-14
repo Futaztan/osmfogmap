@@ -24,12 +24,15 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class SaveLoadManager {
 
     private final Context context;
     private final FogOverlayPolygon fogOverlay;
     private final SettingsManager settingsManager;
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     public SaveLoadManager(Context _context, FogOverlayPolygon fogoverlay, SettingsManager sm)
     {
@@ -39,15 +42,19 @@ public class SaveLoadManager {
     }
     public void saveEverything()
     {
-        saveHoles();
-        savePolygon();
-        saveSettings();
+        executor.execute(()->{
+            saveHoles();
+            savePolygon();
+            saveSettings();
+        });
+
     }
     public void loadEverything()
     {
-        loadHoles();
-        //loadPolygon();
+        executor.execute(this::loadHoles);
+        loadPolygon();
         loadSettings();
+
     }
 
     private void savePolygon() {
@@ -97,6 +104,7 @@ public class SaveLoadManager {
     }
     private void saveHoles() {
         Log.d("log-save", "SIKERES save");
+
         List<GeoPoint> holes = fogOverlay.getHoles();
         JSONArray jsonArray = new JSONArray();
 
