@@ -1,4 +1,4 @@
-package com.osmfogmap;
+package com.osmfogmap.KDtree;
 
 import smile.neighbor.Neighbor;
 

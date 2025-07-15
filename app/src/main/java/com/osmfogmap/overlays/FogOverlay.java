@@ -25,7 +25,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import com.osmfogmap.MyKDtree;
+import com.osmfogmap.KDtree.MyKDtree;
 
 import smile.neighbor.Neighbor;
 
@@ -57,7 +57,7 @@ public class FogOverlay extends Overlay {
 //
 //        rebuildKdTree();
 //        calculateArea();
-        //TODO: terulet szamitas negyzetekre és egyszerusites
+
 
     }
 
@@ -144,7 +144,7 @@ public class FogOverlay extends Overlay {
         holes.removeAll(pointsToRemove);
         rebuildKdTree();
         calculateArea();
-        //TODO MUKODIK GECI
+
 
     }
     public void simplifyHoles()

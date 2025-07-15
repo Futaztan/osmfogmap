@@ -27,7 +27,7 @@ import android.util.Log;
 import com.osmfogmap.MainActivity;
 import com.osmfogmap.area.AreaManager;
 import com.osmfogmap.area.Proj4jAreaCalculator;
-import com.osmfogmap.overlays.temp.KDtreeManager;
+import com.osmfogmap.KDtree.KDtreeManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,7 +52,6 @@ public class FogOverlayPolygon extends Overlay {
     public FogOverlayPolygon(MainActivity main)
     {
 
-        //TODO: kdtree egyszerusites utan szar mert messze lesznek a pontok amikbol felepiti a polygont és szogletes lesz
         super();
         mainActivity = main;
 
@@ -70,10 +69,10 @@ public class FogOverlayPolygon extends Overlay {
 //            holes.add(w);
 //            //Log.d("log-i",String.valueOf(i));
 //        }
-//
-//        areaGeometry = buildUnionPolygon(true);
-//        rebuildKdTree();
-//        calculateArea();
+//        updateRevealedGeometry_andArea();
+//        kdTreeManager.rebuildKdTree(holes);
+//        kdTreeManager.simplifyKDtree(holes);
+
     }
 
 
@@ -91,9 +90,13 @@ public class FogOverlayPolygon extends Overlay {
 
     public void addHole(GeoPoint geoPoint) {
         if (kdTreeManager.processIncomingPoint(geoPoint,holes)) {
-            holes.add(geoPoint);
-            kdTreeManager.rebuildKdTree(holes);
-            updateRevealedGeometry_andArea(false);
+            synchronized (holes)
+            {
+                holes.add(geoPoint);
+                kdTreeManager.rebuildKdTree(holes);
+            }
+
+            updateRevealedGeometry_andArea();
         }
     }
     public void deleteHoles() {
@@ -109,21 +112,23 @@ public class FogOverlayPolygon extends Overlay {
         holes.addAll(points);
         kdTreeManager.rebuildKdTree(holes);
         kdTreeManager.simplifyKDtree(holes);
+        kdTreeManager.deleteRemovedIslands(revealedGeometry,holes);
+        kdTreeManager.rebuildKdTree(holes);
         //updateRevealedGeometry_andArea(true);
         //calculateArea();
+        System.out.println("KESZ A LOADHOLES");
 
     }
     public void loadPolygon(Geometry p)
     {
+      
+        p = DouglasPeuckerSimplifier.simplify(p,0.0005);
         revealedGeometry = p;
-        //deleteSmallIslands();
+        deleteSmallIslands();
         calculateArea();
     }
-
-
-
-
-    private void updateRevealedGeometry_andArea(boolean muchSimplify) {
+    
+    private void updateRevealedGeometry_andArea() {
 
         executor.execute(()->
         {
@@ -146,8 +151,7 @@ public class FogOverlayPolygon extends Overlay {
                 Geometry circle = createCirclePolygon(last);
                 unionResult = circle.union(revealedGeometry);
             }
-            if(muchSimplify) unionResult= DouglasPeuckerSimplifier.simplify(unionResult, 0.0005);
-            else  unionResult = DouglasPeuckerSimplifier.simplify(unionResult, 0.00025);
+            unionResult = DouglasPeuckerSimplifier.simplify(unionResult, 0.00025);
 
             Geometry finalUnionResult = unionResult;
 
@@ -183,7 +187,6 @@ public class FogOverlayPolygon extends Overlay {
                 keptPolygons.add((Polygon) geom);
             }
         }
-        //TODO
         if (keptPolygons.isEmpty())  revealedGeometry = geometryFactory.createMultiPolygon();
         else revealedGeometry = geometryFactory.createMultiPolygon(keptPolygons.toArray(new Polygon[0]));
     }

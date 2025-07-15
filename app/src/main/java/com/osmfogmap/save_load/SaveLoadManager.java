@@ -51,8 +51,8 @@ public class SaveLoadManager {
     }
     public void loadEverything()
     {
-        executor.execute(this::loadHoles);
         loadPolygon();
+        executor.execute(this::loadHoles);
         loadSettings();
 
     }

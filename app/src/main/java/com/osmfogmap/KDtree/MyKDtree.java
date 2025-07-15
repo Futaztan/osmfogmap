@@ -1,6 +1,4 @@
-package com.osmfogmap;
-
-import org.osmdroid.util.GeoPoint;
+package com.osmfogmap.KDtree;
 
 import java.io.Serial;
 import java.io.Serializable;

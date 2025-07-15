@@ -1,16 +1,24 @@
-package com.osmfogmap.overlays.temp;
+package com.osmfogmap.KDtree;
 
 import android.util.Log;
 
-import com.osmfogmap.MyKDtree;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Point;
 import org.osmdroid.util.GeoPoint;
+
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+
 import smile.neighbor.Neighbor;
+
 public class KDtreeManager {
     private MyKDtree<GeoPoint> kdTree;
+
     public void rebuildKdTree(List<GeoPoint> holes) {
         long startTime = System.nanoTime(); // Record the end time
 
@@ -33,7 +41,7 @@ public class KDtreeManager {
         long endTime = System.nanoTime(); // Record the end time
         long durationNano = endTime - startTime;
         double durationMillis = (double) durationNano / 1_000_000.0; // Convert nanoseconds to milliseconds
-        Log.d("fv-rebuildkdtree",String.valueOf(durationMillis));
+        Log.d("fv-rebuildkdtree", String.valueOf(durationMillis));
     }
 
     public boolean processIncomingPoint(GeoPoint incomingPoint, List<GeoPoint> holes) {
@@ -51,7 +59,7 @@ public class KDtreeManager {
             long endTime = System.nanoTime(); // Record the end time
             long durationNano = endTime - startTime;
             double durationMillis = (double) durationNano / 1_000_000.0; // Convert nanoseconds to milliseconds
-            Log.d("fv-processincoming",String.valueOf(durationMillis));
+            Log.d("fv-processincoming", String.valueOf(durationMillis));
             if (distance > 100)
                 return true;
 
@@ -76,27 +84,44 @@ public class KDtreeManager {
     }
 
 
-    public void simplifyKDtree(List<GeoPoint> holes)
-    {
+    public void simplifyKDtree(List<GeoPoint> holes) {
         Set<GeoPoint> pointsToRemove = new HashSet<>();
 
-        for (GeoPoint point : holes)
-        {
-            if (!pointsToRemove.contains(point))
-            {
+        for (GeoPoint point : holes) {
+            if (!pointsToRemove.contains(point)) {
                 double[] coords = new double[]{point.getLatitude(), point.getLongitude()};
                 List<Neighbor<double[], GeoPoint>> neighborList = new ArrayList<>();
                 kdTree.search(coords, 230, neighborList);
 
 
-                for (int i = 1; i < neighborList.size(); i++)
-                {
+                for (int i = 1; i < neighborList.size(); i++) {
                     GeoPoint neighbor = neighborList.get(i).value();
                     pointsToRemove.add(neighbor);
                 }
             }
         }
         holes.removeAll(pointsToRemove);
-        rebuildKdTree(holes);
+
+    }
+
+    public void deleteRemovedIslands(Geometry revealed, List<GeoPoint> holes) {
+        GeometryFactory geometryFactory = new GeometryFactory();
+        synchronized (holes) {
+
+            Iterator<GeoPoint> iterator = holes.iterator();
+            while (iterator.hasNext()) {
+                GeoPoint gp = iterator.next();
+                Coordinate a = new Coordinate(gp.getLongitude(), gp.getLatitude());
+                Point p = geometryFactory.createPoint(a);
+
+                if (!revealed.contains(p))
+                    iterator.remove();
+
+
+            }
+
+        }
+
+
     }
 }
