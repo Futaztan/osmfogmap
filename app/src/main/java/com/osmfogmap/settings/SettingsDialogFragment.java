@@ -19,8 +19,8 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.osmfogmap.R;
 
 public class SettingsDialogFragment extends DialogFragment {
-    private SettingsManager settingsManager;
-    private Context context;
+    private final SettingsManager settingsManager;
+    private final Context context;
 
     public SettingsDialogFragment(SettingsManager sm, Context cont) {
         settingsManager = sm;
@@ -38,7 +38,6 @@ public class SettingsDialogFragment extends DialogFragment {
 
         SwitchCompat switch_CameraFollowing = view.findViewById(R.id.switch_cameraFollowing);
         Button btn_delete = view.findViewById(R.id.btn_delete);
-        Button btn_marker = view.findViewById(R.id.btn_marker);
 
        // Button btn_color = view.findViewById(R.id.btn_color);
 
@@ -87,9 +86,7 @@ public class SettingsDialogFragment extends DialogFragment {
 
         });
 
-        btn_marker.setOnClickListener(v -> {
-            settingsManager.marker();
-        });
+
 
         return view;
     }

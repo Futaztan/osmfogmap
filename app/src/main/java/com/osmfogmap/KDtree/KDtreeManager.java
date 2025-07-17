@@ -95,11 +95,7 @@ public class KDtreeManager {
         long durationNano = endTime - startTime;
         double durationMillis = (double) durationNano / 1_000_000.0; // Convert nanoseconds to milliseconds
         Log.d("fv-processincoming", String.valueOf(durationMillis));
-        if (distance > 100)
-            return true;
-
-
-        return false;
+        return distance > 100;
     }
 
 

@@ -16,10 +16,8 @@ import androidx.core.content.ContextCompat;
 
 
 import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.AdSize;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.MobileAds;
-import com.google.android.gms.ads.admanager.AdManagerAdRequest;
 import com.osmfogmap.area.AreaManager;
 import com.osmfogmap.locationtrack.BackgroundService;
 import com.osmfogmap.locationtrack.LocationUpdateCallback;
@@ -288,13 +286,12 @@ public class MainActivity extends AppCompatActivity implements LocationUpdateCal
         }
         mapView.getOverlays().removeAll(toRemove);
         mapView.invalidate();
-        List<Geometry> poly = new ArrayList<>();
+
         for(int i = 0; i<fogOverlay.revealedGeometry.getNumGeometries(); i++)
         {
 
             Geometry g = fogOverlay.revealedGeometry.getGeometryN(i);
-            g = g.getBoundary();
-            poly.add(g);
+
             for(int j=0; j<g.getCoordinates().length;j++)
             {
                 Marker marker = new Marker(mapView);
