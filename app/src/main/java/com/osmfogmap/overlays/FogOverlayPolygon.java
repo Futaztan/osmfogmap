@@ -8,6 +8,7 @@ import android.graphics.PorterDuffXfermode;
 
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.index.strtree.STRtree;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LinearRing;
 import org.locationtech.jts.geom.Polygon;
@@ -55,6 +56,7 @@ public class FogOverlayPolygon extends Overlay {
         super();
         mainActivity = main;
 
+
 //        double a = 20;
 //        for(int i = 0; i<10000; i++)
 //        {
@@ -76,9 +78,6 @@ public class FogOverlayPolygon extends Overlay {
     }
 
 
-//    public interface OnAreaChangeListener {
-//        void onAreaChanged(double newArea);
-//    }
 
     public static void setOnAreaChangeListener(AreaManager.OnAreaChangeListener _listener) {
         listener = _listener;
@@ -93,7 +92,7 @@ public class FogOverlayPolygon extends Overlay {
             synchronized (holes)
             {
                 holes.add(geoPoint);
-                kdTreeManager.rebuildKdTree(holes);
+                kdTreeManager.addPointToKdTree(geoPoint, holes);
             }
 
             updateRevealedGeometry_andArea();
@@ -102,7 +101,7 @@ public class FogOverlayPolygon extends Overlay {
     public void deleteHoles() {
         GeoPoint lastloc = holes.get(holes.size() - 1);
         holes.clear();
-        kdTreeManager.rebuildKdTree(holes);
+        kdTreeManager.clearKdTree();
         listener.onAreaChanged(-1);
         revealedGeometry = geometryFactory.createMultiPolygon();
         addHole(lastloc);
@@ -197,7 +196,7 @@ public class FogOverlayPolygon extends Overlay {
         {
             mainHandler.post(() -> {
                 if (listener != null) {
-                    listener.onAreaChanged(0.0); // Vagy valamilyen értelmes alapértelmezett érték
+                    listener.onAreaChanged(0.0);
                 }
             });
             return;

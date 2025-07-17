@@ -1,5 +1,3 @@
-import com.android.build.api.dsl.Packaging
-
 plugins {
     alias(libs.plugins.android.application)
 }
@@ -34,6 +32,7 @@ android {
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -48,11 +47,12 @@ android {
 
 dependencies {
 
-    implementation ("org.locationtech.jts:jts-core:1.18.2")
-    implementation("com.github.haifengl:smile-core:4.4.0")
-    implementation("org.locationtech.proj4j:proj4j:1.4.1")
-    implementation ("com.github.yukuku:ambilwarna:2.0.1")
-    implementation ("org.osmdroid:osmdroid-android:6.1.20")
+    implementation(libs.play.services.ads)
+    implementation (libs.jts.core)
+    implementation(libs.smile.core)
+    implementation(libs.proj4j)
+    implementation (libs.ambilwarna)
+    implementation (libs.osmdroid.android)
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)

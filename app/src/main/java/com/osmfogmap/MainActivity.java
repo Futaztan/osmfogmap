@@ -15,6 +15,11 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdSize;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.MobileAds;
+import com.google.android.gms.ads.admanager.AdManagerAdRequest;
 import com.osmfogmap.area.AreaManager;
 import com.osmfogmap.locationtrack.BackgroundService;
 import com.osmfogmap.locationtrack.LocationUpdateCallback;
@@ -48,8 +53,8 @@ public class MainActivity extends AppCompatActivity implements LocationUpdateCal
     GeoPoint lastloc = null;
 
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
-    private static final boolean  SAVE_ENABLED = true;
-    private static final boolean  LOADING_ENABLED = true;
+    private static final boolean  SAVE_ENABLED = false;
+    private static final boolean  LOADING_ENABLED = false;
 
 
     @Override
@@ -58,6 +63,16 @@ public class MainActivity extends AppCompatActivity implements LocationUpdateCal
         EdgeToEdge.enable(this);
         Configuration.getInstance().setUserAgentValue("fogmap/1.0");
         setContentView(R.layout.activity_main);
+
+        new Thread(()->{
+            MobileAds.initialize(this, initializationStatus -> {});
+        });
+
+
+        AdView mAdView = findViewById(R.id.adView);
+        AdRequest adRequest = new AdRequest.Builder().build();
+        mAdView.loadAd(adRequest);
+
 
         mapView =  findViewById(R.id.map);
         myPositionOverlay = new MyPositionOverlay(this);

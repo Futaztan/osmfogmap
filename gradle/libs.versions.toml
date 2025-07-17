@@ -1,5 +1,7 @@
 [versions]
 agp = "8.8.0"
+ambilwarna = "2.0.1"
+jtsCore = "1.18.2"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
@@ -7,10 +9,16 @@ appcompat = "1.7.0"
 material = "1.12.0"
 activity = "1.10.0"
 constraintlayout = "2.2.0"
+osmdroidAndroid = "6.1.20"
+playServicesAds = "24.4.0"
+proj4j = "1.4.1"
+smileCore = "4.4.0"
 uiGraphicsAndroid = "1.7.8"
 playServicesLocation = "21.3.0"
 
 [libraries]
+ambilwarna = { module = "com.github.yukuku:ambilwarna", version.ref = "ambilwarna" }
+jts-core = { module = "org.locationtech.jts:jts-core", version.ref = "jtsCore" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
@@ -18,6 +26,10 @@ appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "a
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
 constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+osmdroid-android = { module = "org.osmdroid:osmdroid-android", version.ref = "osmdroidAndroid" }
+play-services-ads = { module = "com.google.android.gms:play-services-ads", version.ref = "playServicesAds" }
+proj4j = { module = "org.locationtech.proj4j:proj4j", version.ref = "proj4j" }
+smile-core = { module = "com.github.haifengl:smile-core", version.ref = "smileCore" }
 ui-graphics-android = { group = "androidx.compose.ui", name = "ui-graphics-android", version.ref = "uiGraphicsAndroid" }
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 

@@ -18,14 +18,45 @@ import smile.neighbor.Neighbor;
 
 public class KDtreeManager {
     private MyKDtree<GeoPoint> kdTree;
+    private final List<GeoPoint> tempGeoList = new ArrayList<>();
+
+
+    private double nearestPointFromList(GeoPoint incomingPoint)
+    {
+        double min = calculateHaversineDistance(incomingPoint,tempGeoList.get(0));
+        for(int i = 1; i<tempGeoList.size();i++)
+        {
+            double current = calculateHaversineDistance(incomingPoint,tempGeoList.get(i));
+            if(current < min)
+                min = current;
+        }
+        return min;
+    }
+    public void addPointToKdTree(GeoPoint geoPoint, List<GeoPoint> holes)
+    {
+        tempGeoList.add(geoPoint);
+        if(tempGeoList.size()==50)
+        {
+            rebuildKdTree(holes);
+
+        }
+
+    }
+    public void clearKdTree()
+    {
+        kdTree = null;
+        tempGeoList.clear();
+    }
 
     public void rebuildKdTree(List<GeoPoint> holes) {
         long startTime = System.nanoTime(); // Record the end time
 
+        tempGeoList.clear();
         if (holes.isEmpty()) {
             kdTree = null;
             return;
         }
+
         List<GeoPoint> pointsToBuild = new ArrayList<>(holes);
 
         double[][] coords = new double[pointsToBuild.size()][2];
@@ -53,17 +84,21 @@ public class KDtreeManager {
         double[] tomb = new double[]{incomingPoint.getLatitude(), incomingPoint.getLongitude()};
         Neighbor<double[], GeoPoint> nearestResult = kdTree.nearest(tomb);
 
-        if (nearestResult != null) {
-            GeoPoint nearestPoint = nearestResult.value();
-            double distance = calculateHaversineDistance(incomingPoint, nearestPoint);
-            long endTime = System.nanoTime(); // Record the end time
-            long durationNano = endTime - startTime;
-            double durationMillis = (double) durationNano / 1_000_000.0; // Convert nanoseconds to milliseconds
-            Log.d("fv-processincoming", String.valueOf(durationMillis));
-            if (distance > 100)
-                return true;
 
-        }
+        GeoPoint nearestPoint = nearestResult.value();
+        double distanceTree = calculateHaversineDistance(incomingPoint, nearestPoint);
+
+        double distanceList = nearestPointFromList(incomingPoint);
+        double distance = Math.min(distanceTree, distanceList);
+
+        long endTime = System.nanoTime(); // Record the end time
+        long durationNano = endTime - startTime;
+        double durationMillis = (double) durationNano / 1_000_000.0; // Convert nanoseconds to milliseconds
+        Log.d("fv-processincoming", String.valueOf(durationMillis));
+        if (distance > 100)
+            return true;
+
+
         return false;
     }
 
