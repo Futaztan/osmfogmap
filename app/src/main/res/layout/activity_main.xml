@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
     android:layout_width="match_parent"
+    android:fitsSystemWindows="false"
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
@@ -15,6 +16,7 @@
         tools:layout_editor_absoluteY="39dp">
 
     </org.osmdroid.views.MapView>
+
 
 
     <ImageButton
@@ -70,7 +72,7 @@
         android:layout_marginTop="30dp"
         android:layout_marginStart="40dp" />
 
-    <Button
+   <!-- <Button
         android:id="@+id/btn_test"
         android:layout_width="43dp"
         android:layout_height="45dp"
@@ -93,7 +95,7 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         android:layout_marginTop="150dp"
-        android:layout_marginStart="40dp" />
+        android:layout_marginStart="40dp" /> !-->
 
     <com.google.android.gms.ads.AdView
         android:id="@+id/adView"

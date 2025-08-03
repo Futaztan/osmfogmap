@@ -24,7 +24,9 @@ import com.osmfogmap.locationtrack.LocationUpdateCallback;
 import com.osmfogmap.overlays.FogOverlayPolygon;
 import com.osmfogmap.overlays.MyPositionOverlay;
 import com.osmfogmap.save_load.SaveLoadManager;
+import com.osmfogmap.settings.SettingsActivity;
 import com.osmfogmap.settings.SettingsDialogFragment;
+import com.osmfogmap.settings.SettingsFragment;
 import com.osmfogmap.settings.SettingsManager;
 
 import org.locationtech.jts.geom.Geometry;
@@ -44,15 +46,15 @@ public class MainActivity extends AppCompatActivity implements LocationUpdateCal
     private MapController mapController;
     private FogOverlayPolygon fogOverlay;
     private SaveLoadManager saveLoadManager;
-    private SettingsManager settingsManager;
+    public static SettingsManager settingsManager;
     private int tick = 0;
     private MyPositionOverlay myPositionOverlay;
     Intent serviceIntent;
     GeoPoint lastloc = null;
 
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
-    private static final boolean  SAVE_ENABLED = false;
-    private static final boolean  LOADING_ENABLED = false;
+    private static final boolean  SAVE_ENABLED = true;
+    private static final boolean  LOADING_ENABLED = true;
 
 
     @Override
@@ -62,20 +64,20 @@ public class MainActivity extends AppCompatActivity implements LocationUpdateCal
         Configuration.getInstance().setUserAgentValue("fogmap/1.0");
         setContentView(R.layout.activity_main);
 
+
         new Thread(()->{
             MobileAds.initialize(this, initializationStatus -> {});
+
         });
 
-
-        AdView mAdView = findViewById(R.id.adView);
-        AdRequest adRequest = new AdRequest.Builder().build();
-        mAdView.loadAd(adRequest);
-
+//        AdView mAdView = findViewById(R.id.adView);
+//        AdRequest adRequest = new AdRequest.Builder().build();
+//        mAdView.loadAd(adRequest);
 
         mapView =  findViewById(R.id.map);
         myPositionOverlay = new MyPositionOverlay(this);
         fogOverlay = new FogOverlayPolygon(this);
-        settingsManager = new SettingsManager(fogOverlay,mapView);
+        settingsManager = new SettingsManager(fogOverlay);
         saveLoadManager = new SaveLoadManager(this,fogOverlay,settingsManager);
         Button btn_area = findViewById(R.id.btn_area);
         AreaManager areaManager = new AreaManager(btn_area);
@@ -223,8 +225,10 @@ public class MainActivity extends AppCompatActivity implements LocationUpdateCal
 
     public void onSettingsClicked(View view)
     {
-        SettingsDialogFragment dialog = new SettingsDialogFragment(settingsManager,this);
-        dialog.show(getSupportFragmentManager(), "SettingsDialog");
+       Intent intent = new Intent(this, SettingsActivity.class);
+       startActivity(intent);
+        //SettingsDialogFragment dialog = new SettingsDialogFragment(settingsManager,this);
+       // dialog.show(getSupportFragmentManager(), "SettingsDialog");
 }
 
     public void onShowMyPositionClicked(View view) {

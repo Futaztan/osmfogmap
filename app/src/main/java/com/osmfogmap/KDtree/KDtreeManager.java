@@ -23,6 +23,7 @@ public class KDtreeManager {
 
     private double nearestPointFromList(GeoPoint incomingPoint)
     {
+        if(tempGeoList.isEmpty()) return -1;
         double min = calculateHaversineDistance(incomingPoint,tempGeoList.get(0));
         for(int i = 1; i<tempGeoList.size();i++)
         {
@@ -89,7 +90,9 @@ public class KDtreeManager {
         double distanceTree = calculateHaversineDistance(incomingPoint, nearestPoint);
 
         double distanceList = nearestPointFromList(incomingPoint);
-        double distance = Math.min(distanceTree, distanceList);
+        double distance;
+        if(distanceList == -1) distance = distanceTree;
+        else distance = Math.min(distanceTree, distanceList);
 
         long endTime = System.nanoTime(); // Record the end time
         long durationNano = endTime - startTime;
