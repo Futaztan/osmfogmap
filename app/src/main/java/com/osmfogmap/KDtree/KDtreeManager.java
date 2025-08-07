@@ -1,7 +1,5 @@
 package com.osmfogmap.KDtree;
 
-import android.util.Log;
-
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -50,7 +48,7 @@ public class KDtreeManager {
     }
 
     public void rebuildKdTree(List<GeoPoint> holes) {
-        long startTime = System.nanoTime(); // Record the end time
+
 
         tempGeoList.clear();
         if (holes.isEmpty()) {
@@ -70,15 +68,12 @@ public class KDtreeManager {
             data[i] = point;
         }
         kdTree = new MyKDtree<>(coords, data);
-        long endTime = System.nanoTime(); // Record the end time
-        long durationNano = endTime - startTime;
-        double durationMillis = (double) durationNano / 1_000_000.0; // Convert nanoseconds to milliseconds
-        Log.d("fv-rebuildkdtree", String.valueOf(durationMillis));
+
     }
 
     public boolean processIncomingPoint(GeoPoint incomingPoint, List<GeoPoint> holes) {
         // Ha még nincs fa, vagy az első pont, add hozzá.
-        long startTime = System.nanoTime(); // Record the end time
+
         if (kdTree == null || holes.isEmpty())
             return true;
 
@@ -94,10 +89,6 @@ public class KDtreeManager {
         if(distanceList == -1) distance = distanceTree;
         else distance = Math.min(distanceTree, distanceList);
 
-        long endTime = System.nanoTime(); // Record the end time
-        long durationNano = endTime - startTime;
-        double durationMillis = (double) durationNano / 1_000_000.0; // Convert nanoseconds to milliseconds
-        Log.d("fv-processincoming", String.valueOf(durationMillis));
         return distance > 100;
     }
 
